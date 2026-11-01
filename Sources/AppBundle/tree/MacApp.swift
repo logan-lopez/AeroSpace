@@ -174,14 +174,21 @@ final class MacApp: AbstractApp {
     /// Reads the window rect and, if the window is on a monitor that doesn't show its workspace, moves it onto
     /// `workspaceVisibleRect`. Both happen in one job on the app thread, so the caller doesn't wait for apps that are
     /// slow at AX (e.g. Godot). It's a separate job from setFrameJobs, so it doesn't cancel a pending unhide.
+    /// The resulting rect is reported back to MacWindow.lastKnownFloatingRect, so hideInCorner doesn't have to read it.
     func layoutFloatingWindow(_ windowId: OpaqueWindowId, _ monitors: [FloatingLayoutMonitor], workspaceVisibleRect: Rect) {
         floatingLayoutJobs.removeValue(forKey: windowId)?.cancel()
         floatingLayoutJobs[windowId] = withWindowAsync(windowId, .cancellable) { [axApp] window, job in
             guard let windowRect = try AppBundle::getAxRect(window: window, job: job) else { return }
-            guard let topLeft = floatingWindowTopLeftOnWorkspaceMonitor(windowRect, monitors, workspaceVisibleRect) else { return }
-            try job.checkCancellation()
-            try disableAnimations(app: axApp.threadGuarded, job) {
-                try setFrame(window, topLeft, nil, job)
+            var resultRect = windowRect
+            if let topLeft = floatingWindowTopLeftOnWorkspaceMonitor(windowRect, monitors, workspaceVisibleRect) {
+                try job.checkCancellation()
+                try disableAnimations(app: axApp.threadGuarded, job) {
+                    try setFrame(window, topLeft, nil, job)
+                }
+                resultRect = Rect(topLeftX: topLeft.x, topLeftY: topLeft.y, width: windowRect.width, height: windowRect.height)
+            }
+            Task.startUnstructured { @MainActor in
+                MacWindow.allWindowsMap[windowId]?.lastKnownFloatingRect = resultRect
             }
         }
     }
