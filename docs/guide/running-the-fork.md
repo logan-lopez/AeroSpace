@@ -42,9 +42,17 @@ runs:
   keeps talking to the installed server, not the debug one. Key bindings in the config run inside
   the debug server and work as usual.
 - **Accessibility.** The debug server is a bare executable, not an app, so macOS asks for the
-  Accessibility permission on behalf of the terminal that started it (kitty).
+  Accessibility permission on behalf of the app at the top of the process chain that started it:
+  kitty from a kitty shell, but `inn Stories.app` for a session running under it. On macOS 27
+  the list is under Device Control and Data Access.
+- **Window placement starts over.** The debug server doesn't know where the installed AeroSpace
+  had your windows. Those it had hidden come back first, and the debug server puts each one on
+  the visible workspace of the monitor it's on, so a window you kept on workspace 4 shows up on
+  1. Move it back with the `.debug` CLI if a test depends on where it is.
 
-`./build-debug.sh` alone builds into `.debug` without starting anything. When you're timing
+`./build-debug.sh` alone builds into `.debug` without starting anything. Don't pass it
+`-c release`: a release build takes the installed app's id and socket (`bobko.aerospace`) and
+doesn't switch the installed one off, so the two would share a socket. When you're timing
 something, build once and run the `aerospace` in `.debug` directly: `run-cli.sh` rebuilds on every call.
 For numbers that matter, profile the release build, since debug builds are unoptimized.
 

@@ -14,6 +14,10 @@ from each file's frontmatter, so change a decision in its own file, not here.
 
 - [Upstream-bound changes follow upstream's rules](upstream-bound-changes-follow-upstream-rules.md): Changes that might go upstream follow CONTRIBUTING.md and the README's Project values (2026-11-01)
 
+## Layout and refresh
+
+- [Slow-app lag spike lands only a local fix](slow-app-lag-spike-lands-only-a-local-fix.md): The Godot/Moonlight lag is a spike first: it lands a fix only if the fix is local, and the #1615 refresh rewrite is a separate plan (2026-11-01)
+
 ## Not tagged yet
 
 - [Upstream PRs branch from upstream/main](upstream-prs-branch-from-upstream-main.md): The fork's main carries its docs and merges upstream in; upstream PR branches are cut from upstream/main (2026-11-01)

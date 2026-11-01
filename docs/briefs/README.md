@@ -10,12 +10,13 @@ and move to `archive/` when they're done. Ideas that aren't scheduled yet are in
 
 - The fork's `main` is upstream's `main` (nikitabobko/AeroSpace) at `7c0f987c` (2026-11-01), plus
   these docs. It has no code changes of its own yet.
-- The main reason for the fork is a performance issue Logan is digging into. It may go upstream.
-  It needs a brief, starting with what the slowdown is and how to reproduce it.
-- Nothing is open. The next step is `brief` for the first piece of work. The stall paths and
-  per-session costs worth measuring are on
-  [windows and focus](../architecture/windows-and-focus.md#unresponsive-apps) and
-  [layout and refresh](../architecture/layout-and-refresh.md#what-one-complete-refresh-costs).
+- The main reason for the fork is a performance issue: with Godot or a Moonlight stream running,
+  workspace switches and commands lag for seconds. It may go upstream (it overlaps upstream
+  #1615).
+- Next: [brief 01](01-godot-moonlight-lag-spike.md), a spike that measures it and lands a local
+  fix or stops at a no-go. Before it can build, Logan installs bash 5 and swiftly
+  ([running the fork](../guide/running-the-fork.md)), and the run needs him at the desktop to
+  start a Moonlight stream.
 - Loose end: writing the architecture pages turned up three likely upstream bugs, not yet
   reproduced. In `Sources/AppBundle/windowLevelCache.swift`, the latch is cleared before it's
   signalled, so waiters hang. `Int32ExitCode.succ` is 2. Quit can block forever on a window the
@@ -28,7 +29,9 @@ and move to `archive/` when they're done. Ideas that aren't scheduled yet are in
 
 In the order they should be done. A status tag follows the link when it isn't "not started".
 
-None yet.
+1. [`01-godot-moonlight-lag-spike.md`](01-godot-moonlight-lag-spike.md) (done, awaiting review): spike on the lag Godot
+   and Moonlight windows cause across all of AeroSpace. Measure, name the stall, land a local fix
+   upstream-ready, or stop at no-go if it's upstream #1615's refresh rewrite.
 
 ## Done
 

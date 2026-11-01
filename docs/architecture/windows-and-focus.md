@@ -259,7 +259,13 @@ messaging timeout, and AeroSpace has no timeout of its own on top. What a hung a
   awaits `getAxRect` for every floating window on visible workspaces (`layoutFloatingWindow` in
   `Sources/AppBundle/layout/layoutRecursive.swift`), and `hideInCorner` awaits `getAxRect` for
   windows not yet hidden and `getAxSize` on every pass for bottom-left hiding
-  (`Sources/AppBundle/tree/MacWindow.swift`). Commands wait behind it.
+  (`Sources/AppBundle/tree/MacWindow.swift`). Commands wait behind it. With apps that answer
+  AX about once per frame (Godot: 13 ms per call at the project list, ~300 ms for the
+  unfocused editor) and frequent CLI calls (a status bar
+  polling `list-*`), reads arrive faster than the app answers and the server stops responding
+  for minutes ([brief 01](../briefs/01-godot-moonlight-lag-spike.md)). Branch `slow-app-lag`
+  (not merged) removes the floating read and the first-hide read; the bottom-left size read
+  remains.
 - `on-window-detected` title matchers read the title with `.nonCancellable`, so a heavy session
   registering a window of a hung app can't be cancelled out of that wait.
 - While the mouse is down, each moved or resized notification adds a frontmost-app hop through
