@@ -13,3 +13,8 @@
 # XCode User settings
 xcuserdata/
 xcshareddata/
+
+# Logan's fork: commit path-scoped agent rules
+!/.claude/
+/.claude/*
+!/.claude/rules/

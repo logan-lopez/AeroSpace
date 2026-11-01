@@ -12,7 +12,14 @@ and move to `archive/` when they're done. Ideas that aren't scheduled yet are in
   these docs. It has no code changes of its own yet.
 - The main reason for the fork is a performance issue Logan is digging into. It may go upstream.
   It needs a brief, starting with what the slowdown is and how to reproduce it.
-- Nothing is open. The next step is `brief` for the first piece of work.
+- Nothing is open. The next step is `brief` for the first piece of work. The stall paths and
+  per-session costs worth measuring are on
+  [windows and focus](../architecture/windows-and-focus.md#unresponsive-apps) and
+  [layout and refresh](../architecture/layout-and-refresh.md#what-one-complete-refresh-costs).
+- Loose end: writing the architecture pages turned up three likely upstream bugs, not yet
+  reproduced. In `Sources/AppBundle/windowLevelCache.swift`, the latch is cleared before it's
+  signalled, so waiters hang. `Int32ExitCode.succ` is 2. Quit can block forever on a window the
+  app thread already pruned.
 - The fork's docs live only in new paths, so merging upstream doesn't conflict. Upstream PRs branch
   from `upstream/main`, a remote added on 2026-11-01
   ([decisions](../decisions/README.md)).
