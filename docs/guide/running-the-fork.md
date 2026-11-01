@@ -13,9 +13,11 @@ build works underneath is on [the build page](../architecture/build-and-release.
 The scripts need two things this machine doesn't have yet:
 
 - **bash 5 first on `PATH`.** Every script runs `env bash` and refuses anything older, and macOS's
-  /bin/bash is 3.2. `brew install bash`.
+  /bin/bash is 3.2. On this machine it's zerobrew's, in `/opt/zerobrew/bin`, which sits after
+  `/bin` on `PATH`: prefix the command with `PATH=/opt/zerobrew/bin:$HOME/.swiftly/bin:$PATH`.
 - **swiftly**, which supplies the Swift toolchain pinned in `.swift-version`. There's no fallback
-  to Xcode's `swift`. `brew install swiftly`, then `swiftly init` and `swiftly install` in the repo.
+  to Xcode's `swift`. Installed from zerobrew; `swiftly init --no-modify-profile` and
+  `swiftly install` in the repo are done (2026-11-01).
 
 Formatters, linters and XcodeGen download themselves on first use. The release build needs more,
 because it also builds the man pages and shell completions: Xcode, fish, Rust (cargo) and Ruby
@@ -62,9 +64,23 @@ For numbers that matter, profile the release build, since debug builds are unopt
 `aerospace-dev` cask. It **uninstalls the `aerospace` cask first**, so your Homebrew install is
 gone until you reinstall it (brew install --cask nikitabobko/tap/aerospace).
 
-It signs with a self-signed certificate named `aerospace-codesign-certificate`, which you create
-once in Keychain Access (steps in `dev-docs/development.md`). A release build also needs a clean
-working tree: commit first, since it fails on any uncommitted or untracked file.
+It signs with a certificate named `aerospace-codesign-certificate` by default, which this machine
+doesn't have. Sign with your Developer ID instead: build first, then install without rebuilding.
+
+```sh
+PATH=/opt/zerobrew/opt/ruby@3.4/bin:/opt/zerobrew/bin:$HOME/.swiftly/bin:$PATH
+./build-release.sh --codesign-identity "Developer ID Application: Logan Lopez (CC63JS5AYR)"
+./install-from-sources.sh --dont-rebuild
+```
+
+- **Ruby 3, not 4.** The docs Gemfile pins `~> 3.0`. zerobrew's `ruby` is 4, so the build uses
+  `ruby@3.4`, which is keg-only, hence its bin first on `PATH`. fish comes from zerobrew too.
+- **A clean working tree.** Commit first: the build fails on any uncommitted or untracked file.
+  Building from a branch's worktree keeps `main`'s work out of the way.
+- **The old server keeps running.** Uninstalling the cask doesn't quit it. Quit it from its menu
+  (a normal quit puts hidden windows back), then open the new `/Applications/AeroSpace.app` and
+  grant it Accessibility again: a new signature counts as a new app.
+- The CLI and server versions read `0.0.0-SNAPSHOT <commit>`.
 
 ## What doesn't work from the fork
 
