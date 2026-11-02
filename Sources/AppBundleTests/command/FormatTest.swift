@@ -155,6 +155,16 @@ final class FormatTest: XCTestCase {
         assertPrimitive(FormatVar.window(.windowTitle).expandFormatVar(obj: obj), .string("title-x"))
     }
 
+    func testExpandWindowIsFocused() {
+        let root = Workspace.get(byName: name).rootTilingContainer
+        let focused = TestWindow.new(id: 1, parent: root)
+        let other = TestWindow.new(id: 2, parent: root)
+        assertTrue(focused.focusWindow())
+
+        assertPrimitive(FormatVar.window(.windowIsFocused).expandFormatVar(obj: .window(.forTest(window: focused, title: nil))), .bool(true))
+        assertPrimitive(FormatVar.window(.windowIsFocused).expandFormatVar(obj: .window(.forTest(window: other, title: nil))), .bool(false))
+    }
+
     func testExpandWindowLayoutTiling() {
         let root = Workspace.get(byName: name).rootTilingContainer
         let window = TestWindow.new(id: 1, parent: root)
@@ -318,12 +328,14 @@ final class FormatTest: XCTestCase {
     func testFormatToJsonSingleObject() {
         let window = TestWindow.new(id: 42, parent: Workspace.get(byName: name).rootTilingContainer)
         window.isFullscreen = true
+        assertTrue(window.focusWindow())
         let objs: [AeroObj] = [.window(.forTest(window: window, title: "hello"))]
         let result = objs.formatToJson(
             [
                 .interVar(.formatVar(.window(.windowId))),
                 .interVar(.formatVar(.window(.windowTitle))),
                 .interVar(.formatVar(.window(.windowIsFullscreen))),
+                .interVar(.formatVar(.window(.windowIsFocused))),
             ],
             ignoreRightPaddingVar: true,
         )
@@ -331,6 +343,7 @@ final class FormatTest: XCTestCase {
             "window-id": Primitive.int(42),
             "window-title": Primitive.string("hello"),
             "window-is-fullscreen": Primitive.bool(true),
+            "window-is-focused": Primitive.bool(true),
         ]])
         assertSucc(result, expected.orDie())
     }

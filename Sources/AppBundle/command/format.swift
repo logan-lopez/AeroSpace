@@ -159,6 +159,7 @@ extension FormatVar {
                 return switch f {
                     case .windowId: .success(.int(w.window.windowId.rawId))
                     case .windowIsFullscreen: .success(.bool(w.window.isFullscreen))
+                    case .windowIsFocused: .success(.bool(globalFocus.windowOrNil == w.window))
                     case .windowTitle: .success(.string(w.title.orDie("Title wasn't prefetched")))
                     case .windowLayout, .windowParentContainerLayout: toLayoutResult(w: w.window)
                 }
