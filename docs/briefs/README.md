@@ -24,6 +24,9 @@ and move to `archive/` when they're done. Ideas that aren't scheduled yet are in
 - The fork's docs live only in new paths, so merging upstream doesn't conflict. Upstream PRs branch
   from `upstream/main`, a remote added on 2026-11-01
   ([decisions](../decisions/README.md)).
+- Also open (2026-11-02): [brief 02](02-window-is-focused-format-variable.md), a small format
+  variable for Wicket, independent of 01. Installing it means a build that merges it with
+  `slow-app-lag`.
 
 ## Open
 
@@ -32,6 +35,9 @@ In the order they should be done. A status tag follows the link when it isn't "n
 1. [`01-godot-moonlight-lag-spike.md`](01-godot-moonlight-lag-spike.md) (done, awaiting review): spike on the lag Godot
    and Moonlight windows cause across all of AeroSpace. Measure, name the stall, land a local fix
    upstream-ready, or stop at no-go if it's upstream #1615's refresh rewrite.
+2. [`02-window-is-focused-format-variable.md`](02-window-is-focused-format-variable.md) (in progress): a
+   `%{window-is-focused}` format variable on its own upstream-bound branch, so Wicket's press
+   costs one `aerospace` process. Wicket's brief 10 waits on it.
 
 ## Done
 

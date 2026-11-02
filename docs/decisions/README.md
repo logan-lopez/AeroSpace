@@ -14,6 +14,10 @@ from each file's frontmatter, so change a decision in its own file, not here.
 
 - [Upstream-bound changes follow upstream's rules](upstream-bound-changes-follow-upstream-rules.md): Changes that might go upstream follow CONTRIBUTING.md and the README's Project values (2026-11-01)
 
+## `Sources/Common/cmdArgs/impl/ListWindowsCmdArgs.swift`
+
+- [window-is-focused goes on its own branch](window-is-focused-goes-on-its-own-branch.md): %{window-is-focused} goes on its own branch cut from upstream/main, and Logan's install merges it with slow-app-lag (2026-11-02)
+
 ## Layout and refresh
 
 - [Slow-app lag spike lands only a local fix](slow-app-lag-spike-lands-only-a-local-fix.md): The Godot/Moonlight lag is a spike first: it lands a fix only if the fix is local, and the #1615 refresh rewrite is a separate plan (2026-11-01)
