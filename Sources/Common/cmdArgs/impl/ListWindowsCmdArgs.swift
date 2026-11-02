@@ -179,6 +179,7 @@ public enum FormatVar: RawRepresentable, Equatable, CaseIterable, Sendable {
     public enum WindowFormatVar: String, Equatable, CaseIterable, Sendable {
         case windowId = "window-id"
         case windowIsFullscreen = "window-is-fullscreen"
+        case windowIsFocused = "window-is-focused"
         case windowTitle = "window-title"
         case windowLayout = "window-layout" // An alias for windowParentContainerLayout
         case windowParentContainerLayout = "window-parent-container-layout"
