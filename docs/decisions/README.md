@@ -24,4 +24,5 @@ from each file's frontmatter, so change a decision in its own file, not here.
 
 ## Not tagged yet
 
+- [The installed build comes from `personal`](installed-build-comes-from-personal.md): Logan's installed AeroSpace is built from a long-lived personal branch: upstream/main with his feature branches merged in, never rebased (2026-11-02)
 - [Upstream PRs branch from upstream/main](upstream-prs-branch-from-upstream-main.md): The fork's main carries its docs and merges upstream in; upstream PR branches are cut from upstream/main (2026-11-01)

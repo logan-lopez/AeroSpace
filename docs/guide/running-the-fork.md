@@ -60,6 +60,12 @@ For numbers that matter, profile the release build, since debug builds are unopt
 
 ## Installing a release build in place of the cask
 
+**What's installed comes from `personal`.** That branch is `upstream/main` with each feature
+branch you want running merged in (`slow-app-lag` and `window-is-focused` so far), checked out in
+the worktree `../AeroSpace-personal`. To add a change or pick up a newer one, merge the branch in
+there with `git merge --no-ff <branch>` (or `upstream/main`), then build and install from that
+worktree as below. Don't rebase it ([decision](../decisions/installed-build-comes-from-personal.md)).
+
 `./install-from-sources.sh` builds a release `AeroSpace.app` and installs it as the
 `aerospace-dev` cask. It **uninstalls the `aerospace` cask first**, so your Homebrew install is
 gone until you reinstall it (brew install --cask nikitabobko/tap/aerospace).

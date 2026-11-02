@@ -211,3 +211,14 @@ Upstream's two adoc pages changed on the PR branch only.
   machine fact, it belongs under `## This machine` in the dotfiles clone's `.claude/CLAUDE.md`.
 - **Upstream PR.** Open it from `origin/window-is-focused` against `nikitabobko/AeroSpace:main`
   when you decide to.
+
+### After the report: installed (2026-11-02)
+
+Logan asked for one long-lived branch carrying both changes instead of the throwaway merge above:
+`personal`, from `upstream/main` with `slow-app-lag` and `window-is-focused` merged in, in the
+worktree `../AeroSpace-personal`
+([decision](../decisions/installed-build-comes-from-personal.md)). Tests passed on the merge. The
+release build is installed as the `aerospace-dev` cask, and the CLI and server both read
+`0.0.0-SNAPSHOT 2ea24100`. On the installed build, once it had settled, `list-windows --focused`
+and `--workspace focused` (plain and `--json`) agreed on the one `true` window. Still Logan's to
+check: focus another window and see the `true` move.
