@@ -4,6 +4,8 @@ import Common
 final class MacWindow: Window {
     let macApp: MacApp
     private var prevUnhiddenProportionalPositionInsideWorkspaceRect: CGPoint?
+    /// The rect the last floating layout pass read (and maybe moved the window to). Reported back from the app thread
+    @MainActor var lastKnownFloatingRect: Rect? = nil
 
     @MainActor private init(
         _ id: OpaqueWindowId,
@@ -136,7 +138,10 @@ final class MacWindow: Window {
         guard let nodeMonitorInfo else { return }
         // Don't accidentally override prevUnhiddenEmulationPosition in case of subsequent `hideInCorner` calls
         if !isHiddenInCorner {
-            guard let windowRect = try await getAxRect(.cancellable) else { return }
+            // Prefer a rect we already know over an AX read: apps slow at AX (e.g. Godot) would stall the session
+            let knownRect = isFloating ? lastKnownFloatingRect : lastAppliedLayoutPhysicalRect
+            let windowRect: Rect? = if let knownRect { knownRect } else { try await getAxRect(.cancellable) }
+            guard let windowRect else { return }
             // Check for isHiddenInCorner for the second time because of the suspension point above
             if !isHiddenInCorner {
                 let topLeftCorner = windowRect.topLeftCorner

@@ -20,10 +20,12 @@ extension Thread {
     ) async throws -> T { // todo try to convert to typed throws
         try checkCancellation(cm)
         let job = RunLoopJob(cm)
+        let waitState = signposter.beginInterval("runInLoop wait", id: signposter.makeSignpostID(), "\(self.name ?? "?", privacy: .public)")
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { cont in
                 // It's unsafe to implicitly cancel because cont.resume should be invoked exactly once
                 self.runInLoopAsync(job: job, autoCheckCancelled: false) { job in
+                    signposter.endInterval("runInLoop wait", waitState)
                     do {
                         try job.checkCancellation()
                         cont.resume(returning: try body(job))

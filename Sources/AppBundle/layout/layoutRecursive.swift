@@ -31,7 +31,7 @@ extension TreeNode {
                 for window in container.children.filterIsInstance(of: Window.self) {
                     window.lastAppliedLayoutPhysicalRect = nil
                     window.lastAppliedLayoutVirtualRect = nil
-                    try await window.layoutFloatingWindow(context) // todo make it parallel. Get rid of 'try await'
+                    window.layoutFloatingWindow(context)
                 }
             case .window(let window):
                 if window.windowId != currentlyManipulatedWithMouseWindowId {
@@ -74,25 +74,14 @@ private struct LayoutContext {
 
 extension Window {
     @MainActor
-    fileprivate func layoutFloatingWindow(_ context: LayoutContext) async throws {
+    fileprivate func layoutFloatingWindow(_ context: LayoutContext) {
         let workspace = context.workspace
-        let windowRect = try await getAxRect(.cancellable) // Probably not idempotent
-        let currentMonitor = windowRect?.center.monitorApproximation
-        if let currentMonitor, let windowRect, workspace != currentMonitor.visibleWorkspace {
-            let windowTopLeftCorner = windowRect.topLeftCorner
-            let xProportion = (windowTopLeftCorner.x - currentMonitor.visibleRect.topLeftX) / currentMonitor.visibleRect.width
-            let yProportion = (windowTopLeftCorner.y - currentMonitor.visibleRect.topLeftY) / currentMonitor.visibleRect.height
-
-            let workspaceRect = workspace.workspaceMonitorInfo.visibleRect
-            var newX = workspaceRect.topLeftX + xProportion * workspaceRect.width
-            var newY = workspaceRect.topLeftY + yProportion * workspaceRect.height
-
-            let windowWidth = windowRect.width
-            let windowHeight = windowRect.height
-            newX = newX.coerce(in: workspaceRect.minX ... max(workspaceRect.minX, workspaceRect.maxX - windowWidth))
-            newY = newY.coerce(in: workspaceRect.minY ... max(workspaceRect.minY, workspaceRect.maxY - windowHeight))
-
-            setAxFrame(CGPoint(x: newX, y: newY), nil)
+        // Don't await the window rect: apps slow at AX (e.g. Godot) would stall every session that lays out
+        if let window = self as? MacWindow {
+            let monitors = globalUnsortedMonitorInfos.map {
+                FloatingLayoutMonitor(rect: $0.rect, visibleRect: $0.visibleRect, showsWorkspace: $0.visibleWorkspace == workspace)
+            }
+            window.macApp.layoutFloatingWindow(window.windowId, monitors, workspaceVisibleRect: workspace.workspaceMonitorInfo.visibleRect)
         }
         if isFullscreen {
             layoutFullscreen(context)
@@ -182,4 +171,29 @@ extension TilingContainer {
             }
         }
     }
+}
+
+struct FloatingLayoutMonitor {
+    let rect: Rect
+    let visibleRect: Rect
+    let showsWorkspace: Bool
+}
+
+/// Where to move a floating window so that it lands on its workspace's monitor, keeping its proportional position
+/// and size. nil if the window's center is already on a monitor that shows the workspace
+func floatingWindowTopLeftOnWorkspaceMonitor(_ windowRect: Rect, _ monitors: [FloatingLayoutMonitor], _ workspaceVisibleRect: Rect) -> CGPoint? {
+    let center = windowRect.center
+    guard let currentMonitor = monitors.min(by: { center.distance(toOuterFrame: $0.rect) < center.distance(toOuterFrame: $1.rect) }) else { return nil }
+    if currentMonitor.showsWorkspace { return nil }
+    let windowTopLeftCorner = windowRect.topLeftCorner
+    let xProportion = (windowTopLeftCorner.x - currentMonitor.visibleRect.topLeftX) / currentMonitor.visibleRect.width
+    let yProportion = (windowTopLeftCorner.y - currentMonitor.visibleRect.topLeftY) / currentMonitor.visibleRect.height
+
+    let workspaceRect = workspaceVisibleRect
+    var newX = workspaceRect.topLeftX + xProportion * workspaceRect.width
+    var newY = workspaceRect.topLeftY + yProportion * workspaceRect.height
+
+    newX = newX.coerce(in: workspaceRect.minX ... max(workspaceRect.minX, workspaceRect.maxX - windowRect.width))
+    newY = newY.coerce(in: workspaceRect.minY ... max(workspaceRect.minY, workspaceRect.maxY - windowRect.height))
+    return CGPoint(x: newX, y: newY)
 }

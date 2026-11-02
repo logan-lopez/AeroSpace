@@ -16,6 +16,7 @@ final class MacApp: AbstractApp {
     var lastFocusedNativeWindowOpaqueId: OpaqueWindowId? = nil
     private var thread: Thread?
     private var setFrameJobs: [OpaqueWindowId: RunLoopJob] = [:]
+    private var floatingLayoutJobs: [OpaqueWindowId: RunLoopJob] = [:]
     // Never pruned: while the screen is locked, AX reports windows as gone, and closedWindowsCache matches
     // the windows re-detected after unlock by their OpaqueWindowId
     // todo: start prunning after we get rid of closedWindowsCache
@@ -166,6 +167,28 @@ final class MacApp: AbstractApp {
         setFrameJobs[windowId] = withWindowAsync(windowId, .cancellable) { [axApp] window, job in
             try disableAnimations(app: axApp.threadGuarded, job) {
                 try setFrame(window, topLeft, size, job)
+            }
+        }
+    }
+
+    /// Reads the window rect and, if the window is on a monitor that doesn't show its workspace, moves it onto
+    /// `workspaceVisibleRect`. Both happen in one job on the app thread, so the caller doesn't wait for apps that are
+    /// slow at AX (e.g. Godot). It's a separate job from setFrameJobs, so it doesn't cancel a pending unhide.
+    /// The resulting rect is reported back to MacWindow.lastKnownFloatingRect, so hideInCorner doesn't have to read it.
+    func layoutFloatingWindow(_ windowId: OpaqueWindowId, _ monitors: [FloatingLayoutMonitor], workspaceVisibleRect: Rect) {
+        floatingLayoutJobs.removeValue(forKey: windowId)?.cancel()
+        floatingLayoutJobs[windowId] = withWindowAsync(windowId, .cancellable) { [axApp] window, job in
+            guard let windowRect = try AppBundle::getAxRect(window: window, job: job) else { return }
+            var resultRect = windowRect
+            if let topLeft = floatingWindowTopLeftOnWorkspaceMonitor(windowRect, monitors, workspaceVisibleRect) {
+                try job.checkCancellation()
+                try disableAnimations(app: axApp.threadGuarded, job) {
+                    try setFrame(window, topLeft, nil, job)
+                }
+                resultRect = Rect(topLeftX: topLeft.x, topLeftY: topLeft.y, width: windowRect.width, height: windowRect.height)
+            }
+            Task.startUnstructured { @MainActor in
+                MacWindow.allWindowsMap[windowId]?.lastKnownFloatingRect = resultRect
             }
         }
     }
@@ -359,6 +382,11 @@ final class MacApp: AbstractApp {
                 setFrameJobs.removeValue(forKey: windowId)?.cancel()
             }
         }
+        for windowId in floatingLayoutJobs.keys {
+            if !aliveOrInvisibleMap.keys.contains(windowId) {
+                floatingLayoutJobs.removeValue(forKey: windowId)?.cancel()
+            }
+        }
         return aliveOrInvisibleMap
     }
 
@@ -384,6 +412,10 @@ final class MacApp: AbstractApp {
             job.cancel()
         }
         setFrameJobs = [:]
+        for (_, job) in floatingLayoutJobs {
+            job.cancel()
+        }
+        floatingLayoutJobs = [:]
         thread?.runInLoopAsync(job: RunLoopJob(.nonCancellable)) { job in CFRunLoopStop(CFRunLoopGetCurrent()) }
         thread = nil // Disallow all future job submissions
     }
