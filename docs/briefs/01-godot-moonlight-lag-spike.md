@@ -448,3 +448,12 @@ runs; sketchybar keeps talking to the installed one (switched off), so its bar w
   would have softened the stall on the installed build.
 - **The (d) steady state** (400–660 ms after) is at the top of (a)'s range; worth a look if
   Moonlight still feels slow on the hand check.
+
+### After the report: diagnostics reverted (2026-11-02)
+
+`64246aba` is reverted on `slow-app-lag` by `d8a1a354`, a revert rather than a rewrite because the
+branch was already on `origin`. The three files it touched match `upstream/main` again. An upstream
+PR should cherry-pick `eda788df` and `d6e7fff5` onto a fresh branch from `upstream/main`, which
+leaves the commit and its revert behind. The `runInLoop wait` interval is still in `64246aba` if
+it's proposed separately. `slow-app-lag` is merged into `personal`, the branch the installed build
+comes from ([decision](../decisions/installed-build-comes-from-personal.md)).
