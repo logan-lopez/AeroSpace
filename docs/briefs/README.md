@@ -35,7 +35,7 @@ In the order they should be done. A status tag follows the link when it isn't "n
 1. [`01-godot-moonlight-lag-spike.md`](01-godot-moonlight-lag-spike.md) (done, awaiting review): spike on the lag Godot
    and Moonlight windows cause across all of AeroSpace. Measure, name the stall, land a local fix
    upstream-ready, or stop at no-go if it's upstream #1615's refresh rewrite.
-2. [`02-window-is-focused-format-variable.md`](02-window-is-focused-format-variable.md) (in progress): a
+2. [`02-window-is-focused-format-variable.md`](02-window-is-focused-format-variable.md) (done, awaiting review): a
    `%{window-is-focused}` format variable on its own upstream-bound branch, so Wicket's press
    costs one `aerospace` process. Wicket's brief 10 waits on it.
 

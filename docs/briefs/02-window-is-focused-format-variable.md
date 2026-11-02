@@ -1,7 +1,7 @@
 ---
 size: S
 size-note: "one format variable, its tests and its doc line, written upstream's way"
-status: in-progress
+status: awaiting-review
 ---
 # Brief 02: `%{window-is-focused}` format variable
 
@@ -112,3 +112,102 @@ By hand (Logan, after installing): `aerospace list-windows --focused --format
 
 Then stop. Push the branch to `origin` only; don't open an upstream PR or merge into `main`
 without Logan.
+
+## Report
+
+### Built
+
+On branch `window-is-focused`, cut from `upstream/main` (`7c0f987c`) and pushed to `origin`. One
+commit, `5b02d47f Add %{window-is-focused} format variable`:
+
+- **Commands:** `case windowIsFocused = "window-is-focused"` after `windowIsFullscreen` in
+  `WindowFormatVar` (`Sources/Common/cmdArgs/impl/ListWindowsCmdArgs.swift`). It resolves in
+  `Sources/AppBundle/command/format.swift` as
+  `.success(.bool(globalFocus.windowOrNil == w.window))`, which reads like `workspaceFocused`'s
+  `globalFocus.workspace == w`. `Window` is `Hashable`, so it compares the windows directly.
+- **Tests:** `FormatTest.testExpandWindowIsFocused` is true for the focused window and false for
+  another one on the same workspace. `testFormatToJsonSingleObject` focuses its window and checks
+  `"window-is-focused": true` as a JSON Boolean. The "Possible values" strings in
+  `TestCommandTest` (2) and `EchoCommandTest` (1) are updated.
+- **Upstream docs:** ``%{window-is-focused}:: Boolean. `true` if the window has focus`` sits under
+  `window-is-fullscreen`'s line in `docs/aerospace-list-windows.adoc` and
+  `docs/aerospace-test.adoc`, worded like `workspace-is-focused`'s.
+
+`./generate.sh` and `./format.sh` changed nothing: no generated file lists the variables.
+
+On `main`: `28140c72 Brief 02: %{window-is-focused} format variable` commits the brief, its
+decision and the two README entries. They were uncommitted when the session started, and the
+brief had to be committed somewhere to hold this report. Then this report and the retag.
+
+### Deviations
+
+- **`docs/aerospace-test.adoc` gets the line too.** The brief named only
+  `aerospace-list-windows.adoc`, but `rg` showed `test`'s page lists the same window variables.
+- **Commit subject:** `Add %{window-is-focused} format variable`, not the brief's
+  `list-windows: ...`. The variable works in `test`, `echo` and `--json` too, and upstream's
+  scoped subjects name a file or script, not a command.
+
+### Defaults taken
+
+- **Open the upstream PR?** No. The branch is pushed to `origin` only.
+
+### Acceptance
+
+- `./swift-test.sh` on `window-is-focused`: **passed.** A filtered run confirmed the two new or
+  changed tests pass (64 tests in the three classes, 0 failures).
+- `./test.sh` after committing: **passed** (build with warnings as errors, tests, lint,
+  periphery "No unused code detected", generate, clean tree).
+- Debug-build `list-windows --workspace focused --format '%{window-id} %{window-is-focused}'`
+  and the `--json` variant: **not run.** Logan OK'd the debug run. The server built and started
+  but never opened its socket (`Connection refused`). It was waiting on Accessibility for
+  `inn Stories.app`, the app this session runs under. Logan turned it on, the server still
+  didn't answer, and per his answer I skipped the check. I stopped it with SIGINT, and the
+  installed AeroSpace answered afterwards. The JSON Boolean is covered by
+  `testFormatToJsonSingleObject`.
+- `git log upstream/main..window-is-focused`: **only `5b02d47f`**, no fork docs commits.
+
+### Size
+
+Sized S, this session M (36 active min, 36 wall, 0 compactions). The time went to builds and to
+waiting on the debug server, not to the change.
+
+### Spot checks for Logan
+
+Installing replaces your running AeroSpace, so I didn't run any of this. From the main checkout:
+
+```sh
+git worktree add ../AeroSpace-install -b install-lag-and-focus slow-app-lag
+cd ../AeroSpace-install
+git merge --no-ff window-is-focused
+PATH=/opt/zerobrew/opt/ruby@3.4/bin:/opt/zerobrew/bin:$HOME/.swiftly/bin:$PATH
+./build-release.sh --codesign-identity "Developer ID Application: Logan Lopez (CC63JS5AYR)"
+./install-from-sources.sh --dont-rebuild
+```
+
+Then, as [running the fork](../guide/running-the-fork.md) says, quit the old server from its menu
+and start the new one. Check:
+
+- `aerospace list-windows --focused --format '%{window-is-focused}'` prints `true`.
+- `aerospace list-windows --workspace focused --format '%{window-id} %{window-is-focused}'`
+  prints `true` on exactly one line. Focus another window, run it again, and the `true` moves.
+- `aerospace list-windows --workspace focused --json --format '%{window-id} %{window-is-focused}'`
+  gives `"window-is-focused": true` unquoted.
+
+Delete the throwaway branch and worktree when you're done:
+`git worktree remove ../AeroSpace-install && git branch -D install-lag-and-focus`.
+
+### Docs updated
+
+None of the fork's. The commands page and the guide don't list format variables (checked again).
+Upstream's two adoc pages changed on the PR branch only.
+
+### Follow-ups
+
+- **The debug server under inn Stories.** With Accessibility on for `inn Stories.app`, the debug
+  server still didn't open its socket. Cause unknown. The grant might only take effect for a
+  process started after it, or the debug binary might need its own entry. `run-debug.sh` also
+  printed `tccutil: No such bundle identifier "bobko.aerospace.debug"`. Worth one retry with a
+  fresh `./run-debug.sh` before the next brief that needs a live check. If it turns out to be a
+  machine fact, it belongs under `## This machine` in the dotfiles clone's `.claude/CLAUDE.md`.
+- **Upstream PR.** Open it from `origin/window-is-focused` against `nikitabobko/AeroSpace:main`
+  when you decide to.
